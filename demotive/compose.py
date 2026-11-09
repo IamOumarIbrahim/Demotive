@@ -216,10 +216,12 @@ WIN_MASK = rounded_mask((W, H), 14)
 def backdrop():
     y = np.linspace(0, 1, CH)[:, None]
     x = np.linspace(0, 1, CW)[None, :]
-    top, bot = np.array([24, 8, 14]), np.array([10, 6, 12])
+    acc = np.array(ACCENT, dtype=float)
+    # a dark backdrop with a soft glow, both tinted by the accent colour
+    top, bot = 10 + acc * 0.06, 6 + acc * 0.02
     base = top[None, None] * (1 - y[..., None]) + bot[None, None] * y[..., None]
     glow = np.exp(-(((x - 0.5) / 0.45) ** 2 + ((y - 0.15) / 0.35) ** 2))[..., None]
-    img = base + glow * np.array([70, 0, 18])[None, None]
+    img = base + glow * (acc * 0.3)[None, None]
     return Image.fromarray(np.clip(img, 0, 255).astype(np.uint8)).convert("RGBA")
 
 
@@ -330,7 +332,7 @@ def compose(frame: Image.Image, s: float) -> Image.Image:
         f = font(28, "b")
         label = f"{fac:g}×  fast-forward"
         tw = draw.textlength(label, font=f)
-        draw.rounded_rectangle([CW - tw - 70, 30, CW - 30, 82], 26, fill=(230, 0, 35))
+        draw.rounded_rectangle([CW - tw - 70, 30, CW - 30, 82], 26, fill=ACCENT)
         draw.text((CW - tw - 50, 36), label, font=f, fill="white")
     return out.convert("RGB")
 
