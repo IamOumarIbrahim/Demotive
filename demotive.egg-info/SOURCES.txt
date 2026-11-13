@@ -1,0 +1,12 @@
+LICENSE
+README.md
+pyproject.toml
+demotive/__init__.py
+demotive/capture.py
+demotive/compose.py
+demotive/director.py
+demotive.egg-info/PKG-INFO
+demotive.egg-info/SOURCES.txt
+demotive.egg-info/dependency_links.txt
+demotive.egg-info/requires.txt
+demotive.egg-info/top_level.txt

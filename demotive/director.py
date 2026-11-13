@@ -126,7 +126,11 @@ class Director:
 
     def _knob(self, slider, value):
         self.app.update_idletasks()
-        lo, hi = float(slider.cget("from_")), float(slider.cget("to"))
+        try:
+            lo = float(slider.cget("from_"))
+        except Exception:
+            lo = float(slider.cget("from"))
+        hi = float(slider.cget("to"))
         frac = (value - lo) / (hi - lo) if hi != lo else 0
         x = slider.winfo_rootx() - self.app.winfo_rootx()
         y = slider.winfo_rooty() - self.app.winfo_rooty() + slider.winfo_height() // 2
@@ -167,10 +171,11 @@ class Director:
         def begin():
             self.app.update()
             x, y = self.app.winfo_rootx(), self.app.winfo_rooty()
+            hwnd = getattr(self.app, "winfo_id", lambda: 0)()
             self._cap = subprocess.Popen([
                 sys.executable, "-m", "demotive.capture", str(x), str(y), str(self.W), str(self.H),
                 str(self.fps), os.path.join(self.work, "raw.mp4"), self._stop,
-                os.path.join(self.work, "frames.json")],
+                os.path.join(self.work, "frames.json"), str(hwnd)],
                 cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             self.app.after(1500, play)
 
@@ -188,11 +193,16 @@ class Director:
 
         def finish():
             open(self._stop, "w").close()
-            if self._cap:
-                self._cap.wait(timeout=60)
-            with open(os.path.join(self.work, "events.json"), "w", encoding="utf-8") as f:
-                json.dump({"window": [self.W, self.H], "events": self.events}, f, indent=1)
-            self.app.destroy()
+
+            def wait_for_cap():
+                if self._cap and self._cap.poll() is None:
+                    self.app.after(50, wait_for_cap)
+                    return
+                with open(os.path.join(self.work, "events.json"), "w", encoding="utf-8") as f:
+                    json.dump({"window": [self.W, self.H], "events": self.events}, f, indent=1)
+                self.app.destroy()
+
+            wait_for_cap()
 
         self.app.after(int(warmup * 1000), begin)
         self.app.mainloop()
